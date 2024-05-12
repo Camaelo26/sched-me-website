@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scheduled Appointments</title>
+</head>
+<body>
+    <h1>Scheduled Appointments and Patient Information</h1>
+    {% if appointments %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Appointment Date</th>
+                    <th>Patient ID</th>
+                    <th>Name</th>
+                    <th>Date of Birth</th>
+                    <th>Gender</th>
+                    <th>Contact Number</th>
+                    <th>Address</th>
+                    <th>Email</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for appointment in appointments %}
+                <tr>
+                    <td>{{ appointment['AppointmentDate'] }}</td>
+                    <td>{{ appointment['PatientID'] }}</td>
+                    <td>{{ appointment['FirstName'] }} {{ appointment['LastName'] }}</td>
+                    <td>{{ appointment['DateOfBirth'] }}</td>
+                    <td>{{ appointment['Gender'] }}</td>
+                    <td>{{ appointment['ContactNumber'] }}</td>
+                    <td>{{ appointment['Address'] }}</td>
+                    <td>{{ appointment['Email'] }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No scheduled appointments found.</p>
+    {% endif %}
+</body>
+</html>

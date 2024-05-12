@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doctor Menu</title>
+</head>
+<body>
+    <h1>Doctor Menu</h1>
+    <ul>
+        <li><a href="{{ url_for('review_pending_appointments') }}">Review Pending Appointments and others</a></li>
+        <li><a href="{{ url_for('update_doctor_info') }}">Update My Information</a></li>
+        <li><a href="{{ url_for('view_scheduled_patient_info') }}">View Scheduled Appointments and Patient Information</a></li>
+        <li><a href="{{ url_for('home') }}">Return to Main Menu</a></li>
+    </ul>
+</body>
+</html>
