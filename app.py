@@ -109,25 +109,91 @@ def patient_menu():
 def generic_menu():
     return 'Welcome to the Generic menu!'
 
-@app.route('/doctor/review_appointments')
-def review_appointments():
+def review_pending_appointments_content(connection, doctor_id):
+    cursor = connection.cursor()
+    try:
+        query = """
+        SELECT AppointmentID, Patients.FirstName, Patients.LastName, AppointmentDate, Status
+        FROM Appointments
+        JOIN Patients ON Appointments.PatientID = Patients.PatientID
+        WHERE DoctorID = %s
+        ORDER BY AppointmentDate
+        """
+        cursor.execute(query, (doctor_id,))
+        results = cursor.fetchall()
+
+        if results:
+            appointments = []
+            for appt in results:
+                appointment = {
+                    "ID": appt[0],
+                    "Patient": f"{appt[1]} {appt[2]}",
+                    "Date": appt[3].strftime('%Y-%m-%d %H:%M:%S'),
+                    "Status": appt[4]
+                }
+                appointments.append(appointment)
+            return render_template('review_pending_appointments.html', appointments=appointments)
+        else:
+            message = "No pending appointments found for this doctor."
+            return render_template('review_pending_appointments.html', message=message)
+    except Error as e:
+        flash(f"Error fetching appointments: {e}", 'error')
+        return redirect(url_for('doctor_menu'))
+    finally:
+        cursor.close()
+
+
+@app.route('/doctor/review_pending_appointments', methods=['GET', 'POST'])
+def review_pending_appointments():
     doctor_id = session.get('doctor_id')
     connection = create_connection()
-    # Assuming review_appointments function returns HTML content or a redirect
-    return review_appointments(connection, doctor_id)
+    if request.method == 'POST':
+        appointment_id = request.form.get('appointment_id')
+        new_status = request.form.get('new_status')
+        update_appointment_status(connection, appointment_id, new_status)
+        flash(f"Appointment ID {appointment_id} has been updated to {new_status}.", 'success')
+        return redirect(url_for('review_pending_appointments'))
+    else:
+        return review_pending_appointments_content(connection, doctor_id)
+    
+
 
 @app.route('/doctor/update_info', methods=['GET', 'POST'])
 def update_doctor_info():
-    doctor_id = session.get('doctor_id')
+    if 'user_id' not in session or 'role' not in session or session['role'] != 'Doctor':
+        flash('Unauthorized access.', 'error')
+        return redirect(url_for('login'))
+
+    doctor_user_id = session.get('user_id')  # User ID of the logged-in doctor
+    
+    # Fetch the DoctorID associated with the logged-in user ID
+    connection = create_connection()
+    cursor = connection.cursor(dictionary=True)
+    cursor.execute("SELECT DoctorID FROM doctors WHERE UserID = %s", (doctor_user_id,))
+    doctor = cursor.fetchone()
+    if doctor is None:
+        flash('Doctor information not found.', 'error')
+        return redirect(url_for('login'))
+    doctor_id = doctor['DoctorID']
+
     if request.method == 'POST':
         first_name = request.form.get('first_name')
         last_name = request.form.get('last_name')
         contact_number = request.form.get('contact_number')
         email = request.form.get('email')
-        connection = create_connection()
-        # Assuming update_doctor_info is your function that updates the database
-        update_doctor_info(connection, doctor_id, first_name, last_name, contact_number, email)
-        return redirect(url_for('doctor_menu'))
+
+        # Check if any information is provided for update
+        if not any((first_name, last_name, contact_number, email)):
+            flash('No changes submitted.', 'info')
+            return redirect(url_for('update_doctor_info'))
+
+        # Update the doctor information
+        if update_doctor_inf(connection, doctor_id, first_name, last_name, contact_number, email):
+            flash('Doctor information updated successfully.', 'success')
+        else:
+            flash('Failed to update doctor information.', 'error')
+        return redirect(url_for('update_doctor_info'))
+
     return render_template('update_doctor_info.html')
 
 @app.route('/doctor/view_scheduled')
@@ -136,34 +202,42 @@ def view_scheduled_patient_info():
         flash('Unauthorized access.', 'error')
         return redirect(url_for('login'))
 
-    doctor_id = session.get('user_id')
+    user_id = session.get('user_id')
     connection = create_connection()
 
     cursor = connection.cursor(dictionary=True)
     try:
-        query = """
-        SELECT 
-            Patients.PatientID, 
-            Patients.FirstName, 
-            Patients.LastName, 
-            Patients.DateOfBirth, 
-            Patients.Gender, 
-            Patients.ContactNumber, 
-            Patients.Address, 
-            Patients.Email,
-            Appointments.AppointmentDate
-        FROM 
-            Appointments
-        JOIN 
-            Patients ON Appointments.PatientID = Patients.PatientID
-        WHERE 
-            Appointments.DoctorID = %s AND Appointments.Status = 'Scheduled'
-        ORDER BY 
-            Appointments.AppointmentDate
-        """
-        cursor.execute(query, (doctor_id,))
-        results = cursor.fetchall()
-        return render_template('view_scheduled.html', appointments=results)
+        # Fetching the doctor's ID based on the user ID
+        cursor.execute("SELECT DoctorID FROM doctors WHERE UserID = %s", (user_id,))
+        doctor = cursor.fetchone()
+        if doctor:
+            doctor_id = doctor['DoctorID']
+            query = """
+            SELECT 
+                Patients.PatientID, 
+                Patients.FirstName, 
+                Patients.LastName, 
+                Patients.DateOfBirth, 
+                Patients.Gender, 
+                Patients.ContactNumber, 
+                Patients.Address, 
+                Patients.Email,
+                Appointments.AppointmentDate
+            FROM 
+                Appointments
+            JOIN 
+                Patients ON Appointments.PatientID = Patients.PatientID
+            WHERE 
+                Appointments.DoctorID = %s AND Appointments.Status = 'Scheduled'
+            ORDER BY 
+                Appointments.AppointmentDate
+            """
+            cursor.execute(query, (doctor_id,))
+            results = cursor.fetchall()
+            return render_template('view_scheduled.html', appointments=results)
+        else:
+            flash("Doctor not found.", 'error')
+            return redirect(url_for('doctor_menu'))
     except Error as e:
         flash(f"Error fetching patient information: {e}", 'error')
         return redirect(url_for('doctor_menu'))
