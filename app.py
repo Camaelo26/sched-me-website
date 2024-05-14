@@ -2,9 +2,9 @@ from flask import Flask, request, render_template, redirect, url_for, flash, ses
 from mysql.connector import Error
 from register import register_user,verify_password
 from connection import create_connection
-from update import update_doctor_inf,update_appointment_status,update_patient_info
+from update import update_appointment_status
 from appointment import get_pending_appointments,cancel_appointment_by_patient,change_appointment_time,request_appointment,request_new_appointment_time,view_my_appointments,get_scheduled_appointments,get_all_appointments, review_pending_appointments_content
-from department import get_doctors_by_department
+from department import get_doctors_by_department,get_all_departments
 import logging
 
 app = Flask(__name__)
@@ -90,13 +90,7 @@ def login():
 #####
 
 
-@app.route('/doctor/menu')
-def doctor_menu():
-    if 'role' in session and session['role'] == 'Doctor':
-        return render_template('doctor_menu.html')
-    else:
-        flash('Unauthorized access.', 'error')
-        return redirect(url_for('login'))
+
 
 ##########PATIENT##########
 
@@ -126,16 +120,54 @@ def view_appointments_route():
 
 @app.route('/update_info', methods=['GET', 'POST'])
 def update_info_route():
+    if 'patient_id' not in session:
+        flash('Unauthorized access.', 'error')
+        return redirect(url_for('login'))
+
     if request.method == 'POST':
-        first_name = request.form['first_name']
-        last_name = request.form['last_name']
-        dob = request.form['dob']
-        gender = request.form['gender']
-        contact_number = request.form['contact_number']
-        address = request.form['address']
-        email = request.form['email']
-        update_patient_info(create_connection(), session['patient_id'], first_name, last_name, dob, gender, contact_number, address, email)
+        patient_id = session['patient_id']
+
+        first_name = request.form.get('first_name')
+        last_name = request.form.get('last_name')
+        dob = request.form.get('dob')
+        gender = request.form.get('gender')
+        contact_number = request.form.get('contact_number')
+        address = request.form.get('address')
+        email = request.form.get('email')
+
+        fields_to_update = {}
+
+        if first_name:
+            fields_to_update['FirstName'] = first_name
+        if last_name:
+            fields_to_update['LastName'] = last_name
+        if dob:
+            fields_to_update['DOB'] = dob
+        if gender:
+            fields_to_update['Gender'] = gender
+        if contact_number:
+            fields_to_update['ContactNumber'] = contact_number
+        if address:
+            fields_to_update['Address'] = address
+        if email:
+            fields_to_update['Email'] = email
+
+        if fields_to_update:
+            placeholders = ', '.join(f"{field} = %s" for field in fields_to_update.keys())
+            values = list(fields_to_update.values()) + [patient_id]
+
+            update_query = f"UPDATE patients SET {placeholders} WHERE PatientID = %s"
+            connection = create_connection()
+            cursor = connection.cursor()
+            cursor.execute(update_query, values)
+            connection.commit()
+
+            flash('Patient information updated successfully.', 'success')
+        else:
+            flash('No changes submitted.', 'info')
+
         return redirect(url_for('patient_menu'))
+
     return render_template('update_info.html')
 
 @app.route('/change_appointment', methods=['GET', 'POST'])
@@ -170,7 +202,10 @@ def request_appointment_route():
             message = 'Appointment requested successfully!'
             return render_template('request_appointment.html', message=message)
 
-    return render_template('request_appointment.html')
+    # Fetch all departments for initial selection
+    departments = get_all_departments()
+    return render_template('request_appointment.html', departments=departments)
+
 
 
 
@@ -200,12 +235,18 @@ def request_new_time_route():
     return render_template('request_new_time.html', scheduled_appointments=scheduled_appointments)
 
 ########PATIENT MENU END##########
-
-@app.route('/generic/menu')
-def generic_menu():
-    return 'Welcome to the Generic menu!'
+##################################
 
 
+#######DOCTOR MENU################
+
+@app.route('/doctor/menu')
+def doctor_menu():
+    if 'role' in session and session['role'] == 'Doctor':
+        return render_template('doctor_menu.html')
+    else:
+        flash('Unauthorized access.', 'error')
+        return redirect(url_for('login'))
 @app.route('/doctor/review_pending_appointments', methods=['GET', 'POST'])
 def review_pending_appointments():
     doctor_id = session.get('doctor_id')
@@ -243,25 +284,32 @@ def update_doctor_info():
         first_name = request.form.get('first_name')
         last_name = request.form.get('last_name')
         contact_number = request.form.get('contact_number')
-        email = request.form.get('email')
 
-        print("First Name:", first_name)
-        print("Last Name:", last_name)
-        print("Contact Number:", contact_number)
+        fields_to_update = {}
 
+        if first_name:
+            fields_to_update['FirstName'] = first_name
+        if last_name:
+            fields_to_update['LastName'] = last_name
+        if contact_number:
+            fields_to_update['ContactNumber'] = contact_number
 
-        if first_name != '' or last_name != '' or contact_number != '':
-            print("Updating doctor information...")
-            # Update the doctor information
-            if update_doctor_inf(connection, doctor_id, first_name, last_name, contact_number,email):
-                flash('Doctor information updated successfully.', 'success')
-            else:
-                flash('Failed to update doctor information.', 'error')
+        if fields_to_update:
+            placeholders = ', '.join(f"{field} = %s" for field in fields_to_update.keys())
+            values = list(fields_to_update.values()) + [doctor_id]
+
+            update_query = f"UPDATE doctors SET {placeholders} WHERE DoctorID = %s"
+            cursor.execute(update_query, values)
+            connection.commit()
+            
+            flash('Doctor information updated successfully.', 'success')
         else:
             flash('No changes submitted.', 'info')
+
         return redirect(url_for('update_doctor_info'))
 
     return render_template('update_doctor_info.html')
+
 
 
 @app.route('/doctor/view_scheduled')
@@ -312,7 +360,7 @@ def view_scheduled_patient_info():
     finally:
         cursor.close()
 
-
+#######DOCTOR MENU END ###########
 
 
 
