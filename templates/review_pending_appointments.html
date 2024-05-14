@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Review Appointments</title>
+</head>
+<body>
+    <h1>Review Appointments</h1>
+    {% if appointments %}
+    <table>
+        <thead>
+            <tr>
+                <th>Appointment ID</th>
+                <th>Patient</th>
+                <th>Date</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for appointment in appointments %}
+            <tr>
+                <td>{{ appointment.ID }}</td>
+                <td>{{ appointment.Patient }}</td>
+                <td>{{ appointment.Date }}</td>
+                <td>{{ appointment.Status }}</td>
+                <td>
+                    {% if appointment.Status == 'Pending' %}
+                    <form action="{{ url_for('review_pending_appointments') }}" method="post">
+                        <input type="hidden" name="appointment_id" value="{{ appointment.ID }}">
+                        <select name="new_status">
+                            <option value="Scheduled">Accept</option>
+                            <option value="Cancelled">Reject</option>
+                        </select>
+                        <input type="submit" value="Update">
+                    </form>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No appointments found for this doctor.</p>
+    {% endif %}
+     <!-- Option to go back to doctor menu -->
+     <a href="{{ url_for('doctor_menu') }}">Go back to Doctor Menu</a>
+</body>
+</html>

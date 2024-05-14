@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Menu</title>
+</head>
+<body>
+    <header>
+        <h1>Patient Menu</h1>
+    </header>
+    <main>
+        <ul>
+            <li><a href="/request_appointment">Request an Appointment</a></li>
+            <li><a href="/view_appointments">View My Appointments</a></li>
+            <li><a href="/update_info">Update My Information</a></li>
+            <li><a href="/change_appointment">Change Appointment Time</a></li>
+            <li><a href="/request_new_time_route">Request New Time for Appointment</a></li>
+            <li><a href="/cancel_appointment">Cancel Appointment</a></li>
+            <li><a href="{{ url_for('home') }}">Return to Main Menu</a></li>
+        </ul>
+    </main>
+</body>
+</html>
+

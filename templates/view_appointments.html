@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Appointments</title>
+</head>
+<body>
+    <h1>My Appointments</h1>
+    <ul>
+        {% if appointments %}
+            {% for appointment in appointments %}
+                <li>ID: {{ appointment[0] }}, Doctor: {{ appointment[1] }} {{ appointment[2] }}, Department: {{ appointment[3] }}, Date: {{ appointment[4] }}, Status: {{ appointment[5] }}</li>
+            {% endfor %}
+        {% else %}
+            <li>No appointments found.</li>
+        {% endif %}
+    </ul>
+    <br>
+    <a href="{{ url_for('patient_menu') }}">Back to Patient Menu</a>
+</body>
+</html>

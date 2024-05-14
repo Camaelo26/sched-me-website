@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Request New Appointment Time</title>
+</head>
+<body>
+    <h1>Request New Appointment Time</h1>
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <ul>
+          {% for message in messages %}
+            <li>{{ message }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+    {% if scheduled_appointments %}
+        <form action="/request_new_time_route" method="POST">
+            <label for="appointment_id">Select Appointment to Request New Time:</label>
+            <select id="appointment_id" name="appointment_id" required>
+                {% for appointment in scheduled_appointments %}
+                    <option value="{{ appointment[0] }}">
+                        ID: {{ appointment[0] }}, Doctor: {{ appointment[1] }} {{ appointment[2] }}, 
+                        Department: {{ appointment[3] }}, Date: {{ appointment[4] }}
+                    </option>
+                {% endfor %}
+            </select><br><br>
+
+            <label for="new_date">New Date:</label>
+            <input type="datetime-local" id="new_date" name="new_date" required><br><br>
+
+            <input type="submit" value="Request New Time">
+        </form>
+    {% else %}
+        <p>You have no scheduled appointments.</p>
+    {% endif %}
+    <br>
+    <a href="{{ url_for('patient_menu') }}">Back to Patient Menu</a>
+</body>
+</html>

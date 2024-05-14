@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Request Appointment</title>
+</head>
+<body>
+    <h1>Request Appointment</h1>
+    {% if message %}
+        <p>{{ message }}</p>
+    {% endif %}
+    {% if not doctors %}
+        <form action="/request_appointment" method="POST">
+            <label for="department_name">Department Name:</label>
+            <input type="text" id="department_name" name="department_name" required><br><br>
+            <input type="submit" value="List Doctors">
+        </form>
+    {% else %}
+        <h2>Doctors in {{ department_name }} Department</h2>
+        <form action="/request_appointment" method="POST">
+            <input type="hidden" name="department_name" value="{{ department_name }}">
+            <label for="doctor_id">Select Doctor:</label>
+            <select id="doctor_id" name="doctor_id" required>
+                {% for doctor in doctors %}
+                    <option value="{{ doctor[0] }}">Dr. {{ doctor[1] }} {{ doctor[2] }}</option>
+                {% endfor %}
+            </select><br><br>
+            <label for="desired_date">Desired Date:</label>
+            <input type="datetime-local" id="desired_date" name="desired_date" required><br><br>
+            <input type="submit" value="Request Appointment">
+        </form>
+    {% endif %}
+    <br>
+    <a href="{{ url_for('patient_menu') }}">Back to Patient Menu</a>
+</body>
+</html>
