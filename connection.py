@@ -8,9 +8,9 @@ def create_connection():
     try:
         connection = mysql.connector.connect(
             host='localhost',
-            user='root',
-            passwd='Camael26Macarthur',
-            database='Recover_me'
+            user='username',
+            passwd='yourpassword',
+            database='yourdatabasename'
         )
         app.logger.info("Connection to MySQL DB successful")
         return connection
