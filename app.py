@@ -8,7 +8,7 @@ from department import get_doctors_by_department,get_all_departments
 import logging
 
 app = Flask(__name__)
-app.secret_key = 'Camelo123' 
+app.secret_key = 'Createakey' 
 logging.basicConfig(level=logging.DEBUG)
 
 
